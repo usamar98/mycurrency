@@ -2,10 +2,10 @@ import type { ExchangeRatesResponse, RestCountry } from "@/types";
 
 const COUNTRIES_URL =
   "https://restcountries.com/v3.1/all?fields=name,cca2,capital,flags,currencies,languages,timezones,region,subregion";
-const RATES_URL = "https://open.er-api.com/v6/latest/PKR";
+const RATES_BASE_URL = "https://open.er-api.com/v6/latest";
 
-const COUNTRIES_CACHE_KEY = "pctc:countries:v2";
-const RATES_CACHE_KEY = "pctc:rates:v1";
+const COUNTRIES_CACHE_KEY = "wctc:countries:v1";
+const RATES_CACHE_PREFIX = "wctc:rates:v1";
 const COUNTRIES_TTL = 24 * 60 * 60 * 1000;
 const RATES_TTL = 30 * 60 * 1000;
 
@@ -78,18 +78,26 @@ export async function fetchCountries(): Promise<RestCountry[]> {
 }
 
 export async function fetchRates(
+  baseCurrencyCode: string,
   forceRefresh = false
 ): Promise<ExchangeRatesResponse> {
+  const normalizedBase = baseCurrencyCode.trim().toUpperCase();
+  if (!normalizedBase) {
+    throw new Error("Choose a base currency before loading exchange rates.");
+  }
+
+  const cacheKey = `${RATES_CACHE_PREFIX}:${normalizedBase}`;
+
   if (!forceRefresh) {
-    const cachedRates = readCache<ExchangeRatesResponse>(RATES_CACHE_KEY, RATES_TTL);
+    const cachedRates = readCache<ExchangeRatesResponse>(cacheKey, RATES_TTL);
     if (cachedRates) {
       return cachedRates;
     }
   }
 
-  const response = await fetch(RATES_URL);
+  const response = await fetch(`${RATES_BASE_URL}/${normalizedBase}`);
   if (!response.ok) {
-    throw new Error("Could not load PKR exchange rates.");
+    throw new Error(`Could not load ${normalizedBase} exchange rates.`);
   }
 
   const rates = (await response.json()) as ExchangeRatesResponse;
@@ -97,6 +105,6 @@ export async function fetchRates(
     throw new Error("Currency API returned an unexpected response.");
   }
 
-  writeCache(RATES_CACHE_KEY, rates);
+  writeCache(cacheKey, rates);
   return rates;
 }

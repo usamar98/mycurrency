@@ -4,7 +4,7 @@ const amountFormatter = new Intl.NumberFormat("en-PK", {
   maximumFractionDigits: 6
 });
 
-const pkrFormatter = new Intl.NumberFormat("en-PK", {
+const currencyValueFormatter = new Intl.NumberFormat("en-PK", {
   maximumFractionDigits: 2
 });
 
@@ -22,17 +22,18 @@ export function getPrimaryCurrency(country: RestCountry): CurrencyInfo | null {
 
 export function formatCurrencyRate(
   currencyCode: string | undefined,
-  rates: Record<string, number>
+  rates: Record<string, number>,
+  baseCurrencyCode: string
 ): string {
   if (!currencyCode || !rates[currencyCode]) {
     return "Not available";
   }
 
-  const pkrValue = 1 / rates[currencyCode];
-  return `${pkrFormatter.format(pkrValue)} PKR`;
+  const baseValue = 1 / rates[currencyCode];
+  return `${currencyValueFormatter.format(baseValue)} ${baseCurrencyCode}`;
 }
 
-export function formatPkrToLocalCurrency(
+export function formatBaseToLocalCurrency(
   currencyCode: string | undefined,
   rates: Record<string, number>
 ): string {

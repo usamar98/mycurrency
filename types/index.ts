@@ -31,7 +31,7 @@ export type ExchangeRatesResponse = {
   time_last_update_utc?: string;
   time_next_update_unix?: number;
   time_next_update_utc?: string;
-  base_code: "PKR";
+  base_code: string;
   rates: Record<string, number>;
 };
 
@@ -42,3 +42,10 @@ export type CurrencyInfo = {
 };
 
 export type ViewMode = "table" | "cards";
+
+export type BaseCountryOption = {
+  code: string;
+  label: string;
+  currencyCode: string;
+  timezones: string[];
+};

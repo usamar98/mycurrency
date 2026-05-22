@@ -13,7 +13,7 @@ import {
 import {
   getCurrentTimeInTimezone,
   getPrimaryTimezone,
-  getTimeDifferenceFromPakistan
+  getTimeDifferenceFromBase
 } from "@/lib/time";
 import type { RestCountry } from "@/types";
 import { useMemo, useState } from "react";
@@ -21,9 +21,18 @@ import { useMemo, useState } from "react";
 type CountryCardProps = {
   country: RestCountry;
   rates: Record<string, number>;
+  baseCurrencyCode: string;
+  baseTimezone: string;
+  baseCountryName: string;
 };
 
-export function CountryCard({ country, rates }: CountryCardProps) {
+export function CountryCard({
+  country,
+  rates,
+  baseCurrencyCode,
+  baseTimezone,
+  baseCountryName
+}: CountryCardProps) {
   const primaryCurrency = getPrimaryCurrency(country);
   const allCurrencies = getAllCurrencies(country);
   const initialTimezone = getPrimaryTimezone(country) ?? "";
@@ -35,7 +44,11 @@ export function CountryCard({ country, rates }: CountryCardProps) {
   );
 
   const localTime = getCurrentTimeInTimezone(selectedTimezone);
-  const timeDifference = getTimeDifferenceFromPakistan(selectedTimezone);
+  const timeDifference = getTimeDifferenceFromBase(
+    selectedTimezone,
+    baseTimezone,
+    baseCountryName
+  );
   const currencyLabel = primaryCurrency
     ? `${primaryCurrency.code} ${primaryCurrency.name}`
     : "Currency not listed";
@@ -84,9 +97,11 @@ export function CountryCard({ country, rates }: CountryCardProps) {
               Exchange rate
             </p>
             <p className="mt-2 font-mono text-xl font-bold text-zinc-950">
-              {formatCurrencyRate(primaryCurrency?.code, rates)}
+              {formatCurrencyRate(primaryCurrency?.code, rates, baseCurrencyCode)}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">1 local currency in PKR</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              1 local currency in {baseCurrencyCode}
+            </p>
           </div>
 
           <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-4">

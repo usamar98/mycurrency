@@ -1,8 +1,8 @@
 "use client";
 
 import {
+  formatBaseToLocalCurrency,
   formatCurrencyRate,
-  formatPkrToLocalCurrency,
   getAllCurrencies,
   getPrimaryCurrency
 } from "@/lib/currency";
@@ -14,7 +14,7 @@ import {
 import {
   getCurrentTimeInTimezone,
   getPrimaryTimezone,
-  getTimeDifferenceFromPakistan
+  getTimeDifferenceFromBase
 } from "@/lib/time";
 import type { RestCountry } from "@/types";
 import { useState } from "react";
@@ -22,14 +22,23 @@ import { useState } from "react";
 type CountryTableProps = {
   countries: RestCountry[];
   rates: Record<string, number>;
+  baseCurrencyCode: string;
+  baseTimezone: string;
+  baseCountryName: string;
 };
 
 function CountryRow({
   country,
-  rates
+  rates,
+  baseCurrencyCode,
+  baseTimezone,
+  baseCountryName
 }: {
   country: RestCountry;
   rates: Record<string, number>;
+  baseCurrencyCode: string;
+  baseTimezone: string;
+  baseCountryName: string;
 }) {
   const primaryCurrency = getPrimaryCurrency(country);
   const allCurrencies = getAllCurrencies(country);
@@ -84,16 +93,20 @@ function CountryRow({
         ) : null}
       </td>
       <td className="min-w-44 px-4 py-4 font-mono text-sm font-semibold text-zinc-950">
-        {formatCurrencyRate(primaryCurrency?.code, rates)}
+        {formatCurrencyRate(primaryCurrency?.code, rates, baseCurrencyCode)}
       </td>
       <td className="min-w-44 px-4 py-4 font-mono text-sm text-zinc-700">
-        {formatPkrToLocalCurrency(primaryCurrency?.code, rates)}
+        {formatBaseToLocalCurrency(primaryCurrency?.code, rates)}
       </td>
       <td className="min-w-48 px-4 py-4 font-mono text-sm text-zinc-950">
         {getCurrentTimeInTimezone(selectedTimezone)}
       </td>
       <td className="min-w-52 px-4 py-4 text-sm font-medium text-emerald-800">
-        {getTimeDifferenceFromPakistan(selectedTimezone)}
+        {getTimeDifferenceFromBase(
+          selectedTimezone,
+          baseTimezone,
+          baseCountryName
+        )}
       </td>
       <td className="min-w-48 px-4 py-4 text-sm text-zinc-600">
         {(country.timezones?.length ?? 0) > 1 ? (
@@ -116,7 +129,13 @@ function CountryRow({
   );
 }
 
-export function CountryTable({ countries, rates }: CountryTableProps) {
+export function CountryTable({
+  countries,
+  rates,
+  baseCurrencyCode,
+  baseTimezone,
+  baseCountryName
+}: CountryTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-soft">
       <div className="overflow-x-auto">
@@ -130,16 +149,29 @@ export function CountryTable({ countries, rates }: CountryTableProps) {
               <th className="px-4 py-4 font-semibold">Official Languages</th>
               <th className="px-4 py-4 font-semibold">Business Languages</th>
               <th className="px-4 py-4 font-semibold">Currency</th>
-              <th className="px-4 py-4 font-semibold">1 Local Currency = PKR</th>
-              <th className="px-4 py-4 font-semibold">1 PKR = Local Currency</th>
+              <th className="px-4 py-4 font-semibold">
+                1 Local Currency = {baseCurrencyCode}
+              </th>
+              <th className="px-4 py-4 font-semibold">
+                1 {baseCurrencyCode} = Local Currency
+              </th>
               <th className="px-4 py-4 font-semibold">Local Time</th>
-              <th className="px-4 py-4 font-semibold">Time Difference</th>
+              <th className="px-4 py-4 font-semibold">
+                Time Difference from Base
+              </th>
               <th className="px-4 py-4 font-semibold">Timezone</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {countries.map((country) => (
-              <CountryRow key={country.cca2} country={country} rates={rates} />
+              <CountryRow
+                key={country.cca2}
+                country={country}
+                rates={rates}
+                baseCurrencyCode={baseCurrencyCode}
+                baseTimezone={baseTimezone}
+                baseCountryName={baseCountryName}
+              />
             ))}
           </tbody>
         </table>

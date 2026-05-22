@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pakistan Currency & Time Comparator",
+  title: "World Currency & Time Comparator",
   description:
-    "Compare world currencies and current time zones with Pakistan."
+    "Compare world currencies and current time zones from any base country."
 };
 
 export default function RootLayout({

@@ -1,5 +1,3 @@
-export const PAKISTAN_TIMEZONE = "Asia/Karachi";
-
 const timeFormatterOptions: Intl.DateTimeFormatOptions = {
   weekday: "short",
   month: "short",
@@ -66,9 +64,9 @@ function getTimezoneOffsetMinutes(timezone: string, date: Date): number | null {
   return getIanaOffsetMinutes(timezone, date);
 }
 
-function formatDifference(diffMinutes: number): string {
+function formatDifference(diffMinutes: number, baseLabel: string): string {
   if (diffMinutes === 0) {
-    return "Same as Pakistan";
+    return `Same as ${baseLabel}`;
   }
 
   const absMinutes = Math.abs(diffMinutes);
@@ -85,7 +83,7 @@ function formatDifference(diffMinutes: number): string {
   }
 
   const direction =
-    diffMinutes > 0 ? "ahead of Pakistan" : "behind Pakistan";
+    diffMinutes > 0 ? `ahead of ${baseLabel}` : `behind ${baseLabel}`;
   const sign = diffMinutes > 0 ? "+" : "-";
 
   return `${sign}${parts.join(" ")} ${direction}`;
@@ -117,20 +115,22 @@ export function getCurrentTimeInTimezone(timezone: string | null | undefined): s
   }
 }
 
-export function getTimeDifferenceFromPakistan(
-  timezone: string | null | undefined
+export function getTimeDifferenceFromBase(
+  timezone: string | null | undefined,
+  baseTimezone: string | null | undefined,
+  baseLabel = "base"
 ): string {
-  if (!timezone) {
+  if (!timezone || !baseTimezone) {
     return "Not available";
   }
 
   const date = new Date();
-  const pakistanOffset = getTimezoneOffsetMinutes(PAKISTAN_TIMEZONE, date);
+  const baseOffset = getTimezoneOffsetMinutes(baseTimezone, date);
   const targetOffset = getTimezoneOffsetMinutes(timezone, date);
 
-  if (pakistanOffset === null || targetOffset === null) {
+  if (baseOffset === null || targetOffset === null) {
     return "Not available";
   }
 
-  return formatDifference(targetOffset - pakistanOffset);
+  return formatDifference(targetOffset - baseOffset, baseLabel);
 }
