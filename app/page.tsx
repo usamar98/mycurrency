@@ -2,6 +2,7 @@
 
 import { CountryCard } from "@/components/CountryCard";
 import { CountryTable } from "@/components/CountryTable";
+import { PremiumFeatures } from "@/components/PremiumFeatures";
 import { SearchFilters } from "@/components/SearchFilters";
 import { fetchCountries, fetchRates } from "@/lib/api";
 import { getPrimaryCurrency, hasCurrencyRate } from "@/lib/currency";
@@ -10,6 +11,7 @@ import {
   getBusinessLanguages,
   getOfficialLanguages
 } from "@/lib/languages";
+import { getMembershipStatus } from "@/lib/premium";
 import { getCurrentTimeInTimezone, getPrimaryTimezone } from "@/lib/time";
 import type {
   BaseCountryOption,
@@ -228,6 +230,7 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [clockTick, setClockTick] = useState(0);
+  const membershipStatus = useMemo(() => getMembershipStatus(), []);
 
   const selectedBaseCountry = useMemo(
     () =>
@@ -245,6 +248,7 @@ export default function Home() {
   const selectedBaseTimezones = selectedBaseCountry?.timezones ?? [];
   const baseCurrencyCode = selectedBaseCurrency?.code ?? ratesData?.base_code ?? "";
   const baseCountryName = selectedBaseCountry?.name.common ?? "selected base";
+  const ratesUpdatedLabel = formatApiUpdatedTime(ratesData);
 
   const loadCountries = useCallback(async () => {
     setIsCountriesLoading(true);
@@ -521,7 +525,7 @@ export default function Home() {
                 {selectedBaseCountry?.name.common ?? "Loading base"}
               </p>
               <p className="mt-1 text-sm text-zinc-500">
-                {baseCurrencyCode || "Currency"} ·{" "}
+                {baseCurrencyCode || "Currency"} /{" "}
                 {selectedBaseTimezone || "Timezone not listed"}
               </p>
             </div>
@@ -539,7 +543,7 @@ export default function Home() {
             <div>
               <p className="text-xs text-zinc-500">Rates updated</p>
               <p className="font-mono text-sm font-bold text-zinc-950">
-                {formatApiUpdatedTime(ratesData)}
+                {ratesUpdatedLabel}
               </p>
             </div>
           </div>
@@ -591,6 +595,18 @@ export default function Home() {
             </p>
           </div>
         </div>
+
+        {!isInitialLoading && !errorMessage ? (
+          <PremiumFeatures
+            countries={filteredCountries}
+            rates={rates}
+            baseCurrencyCode={baseCurrencyCode}
+            baseCountryName={baseCountryName}
+            baseTimezone={selectedBaseTimezone}
+            ratesUpdatedLabel={ratesUpdatedLabel}
+            membershipStatus={membershipStatus}
+          />
+        ) : null}
 
         {errorMessage ? (
           <ErrorState message={errorMessage} onRetry={loadCountries} />
