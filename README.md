@@ -1,6 +1,6 @@
 # World Currency & Time Comparator
 
-A Next.js + TypeScript dashboard for comparing every country's primary currency, local time, official languages, and business languages from any selected base country.
+A Next.js + TypeScript dashboard for comparing every country's primary currency, local time, population, independence or national day, official languages, and business languages from any selected base country.
 
 ## Features
 
@@ -9,11 +9,12 @@ A Next.js + TypeScript dashboard for comparing every country's primary currency,
 - Exchange rates from ExchangeRate-API open endpoint using `latest/{BASE_CURRENCY}`
 - Converts `rates[CURRENCY_CODE]` into `1 foreign currency = X base currency` with `1 / rate`
 - Current time and offset comparison against the selected base timezone
+- Current population from the REST Countries dataset
+- Independence or national day display with a curated fallback map
 - Official languages from REST Countries
 - Business languages estimated from official languages plus English where it is not already listed
 - Search, region filter, table/card view toggle
 - Multiple currency display and timezone dropdowns
-- Premium-ready member tools for CSV export, watchlist alerts, meeting planning, rankings, and travel briefs
 - Loading skeletons, empty state, error state, currency refresh, localStorage caching
 
 ## Run Locally
@@ -63,24 +64,6 @@ const RATES_BASE_URL =
 ```
 
 If your paid provider requires a key in the URL, append it there when building the request for the selected base currency. If it uses an HTTP header, do not expose a private server key in client-side code. In that case, add a small Next.js Route Handler such as `app/api/rates/route.ts`, read a non-public `EXCHANGE_RATE_API_KEY` on the server, and let the client fetch `/api/rates?base=USD`.
-
-## Premium Membership Notes
-
-The project includes a premium-ready member tools area with:
-
-- CSV export
-- Rate watchlist alerts
-- Meeting window planner
-- Currency strength ranking
-- Business travel brief
-
-By default these tools render as locked for free users. For local UI testing, create `.env.local`:
-
-```bash
-NEXT_PUBLIC_PREMIUM_PREVIEW=true
-```
-
-That only enables a client-side preview. Do not use this as real security. Before charging users, connect a payment provider such as Stripe, Lemon Squeezy, or Paddle, store subscription status on the server, and replace `getMembershipStatus()` in `lib/premium.ts` with a server-verified membership check. Any truly paid data or export should also be protected by a server route, not only hidden in the browser.
 
 ## Timezone Notes
 

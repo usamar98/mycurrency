@@ -103,7 +103,7 @@ export function SearchFilters({
             <input
               value={searchTerm}
               onChange={(event) => onSearchTermChange(event.target.value)}
-              placeholder="Country, capital, currency, language, region"
+              placeholder="Country, capital, currency, population, language, independence"
               className="h-12 rounded-lg border border-zinc-200 bg-white px-4 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
           </label>

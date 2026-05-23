@@ -2,16 +2,15 @@
 
 import { CountryCard } from "@/components/CountryCard";
 import { CountryTable } from "@/components/CountryTable";
-import { PremiumFeatures } from "@/components/PremiumFeatures";
 import { SearchFilters } from "@/components/SearchFilters";
 import { fetchCountries, fetchRates } from "@/lib/api";
+import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import { getPrimaryCurrency, hasCurrencyRate } from "@/lib/currency";
 import {
   formatLanguageList,
   getBusinessLanguages,
   getOfficialLanguages
 } from "@/lib/languages";
-import { getMembershipStatus } from "@/lib/premium";
 import { getCurrentTimeInTimezone, getPrimaryTimezone } from "@/lib/time";
 import type {
   BaseCountryOption,
@@ -56,7 +55,8 @@ function EmptyState() {
         No countries match your filters.
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-        Try a different country name, capital, currency code, language, or region.
+        Try a different country name, capital, currency code, population,
+        language, independence day, or region.
       </p>
     </div>
   );
@@ -230,7 +230,6 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [clockTick, setClockTick] = useState(0);
-  const membershipStatus = useMemo(() => getMembershipStatus(), []);
 
   const selectedBaseCountry = useMemo(
     () =>
@@ -456,6 +455,8 @@ export default function Home() {
         country.subregion,
         currency?.code,
         currency?.name,
+        formatPopulation(country.population),
+        getIndependenceDay(country),
         formatLanguageList(getOfficialLanguages(country)),
         formatLanguageList(getBusinessLanguages(country))
       ]
@@ -480,6 +481,13 @@ export default function Home() {
       ).length,
     [filteredCountries, rates]
   );
+  const countriesWithPopulation = useMemo(
+    () =>
+      filteredCountries.filter(
+        (country) => typeof country.population === "number"
+      ).length,
+    [filteredCountries]
+  );
 
   const baseTime = useMemo(() => {
     void clockTick;
@@ -501,7 +509,8 @@ export default function Home() {
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 md:text-lg">
             Choose any base country, then compare world currencies, local times,
-            languages, and business context against it.
+            population, independence days, languages, and business context
+            against it.
           </p>
         </div>
 
@@ -570,7 +579,7 @@ export default function Home() {
       />
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+        <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto_auto_auto] md:items-center">
           <div>
             <p className="text-sm font-semibold text-zinc-500">
               {countriesWithRates} of {filteredCountries.length} visible countries
@@ -578,8 +587,8 @@ export default function Home() {
             </p>
             <p className="mt-1 text-xs text-zinc-400">
               Change the base country to make the entire dashboard useful for your
-              location. Business languages are estimated from official languages
-              plus English where useful.
+              location. Population comes from REST Countries; independence dates
+              use a curated country facts map.
             </p>
           </div>
           <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
@@ -594,19 +603,13 @@ export default function Home() {
               {regions.length}
             </p>
           </div>
+          <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+            <p className="text-xs text-zinc-500">Population data</p>
+            <p className="font-mono text-lg font-black text-zinc-950">
+              {countriesWithPopulation}
+            </p>
+          </div>
         </div>
-
-        {!isInitialLoading && !errorMessage ? (
-          <PremiumFeatures
-            countries={filteredCountries}
-            rates={rates}
-            baseCurrencyCode={baseCurrencyCode}
-            baseCountryName={baseCountryName}
-            baseTimezone={selectedBaseTimezone}
-            ratesUpdatedLabel={ratesUpdatedLabel}
-            membershipStatus={membershipStatus}
-          />
-        ) : null}
 
         {errorMessage ? (
           <ErrorState message={errorMessage} onRetry={loadCountries} />

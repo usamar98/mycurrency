@@ -6,6 +6,7 @@ import {
   getAllCurrencies,
   getPrimaryCurrency
 } from "@/lib/currency";
+import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import {
   formatLanguageList,
   getBusinessLanguages,
@@ -44,6 +45,7 @@ function CountryRow({
   const allCurrencies = getAllCurrencies(country);
   const officialLanguages = getOfficialLanguages(country);
   const businessLanguages = getBusinessLanguages(country);
+  const independenceDay = getIndependenceDay(country);
   const [selectedTimezone, setSelectedTimezone] = useState(
     getPrimaryTimezone(country) ?? ""
   );
@@ -69,6 +71,12 @@ function CountryRow({
         {country.subregion ? (
           <p className="mt-1 text-xs text-zinc-400">{country.subregion}</p>
         ) : null}
+      </td>
+      <td className="min-w-40 px-4 py-4 font-mono text-sm font-semibold text-zinc-950">
+        {formatPopulation(country.population)}
+      </td>
+      <td className="min-w-52 px-4 py-4 text-sm text-zinc-700">
+        {independenceDay}
       </td>
       <td className="min-w-56 px-4 py-4 text-sm text-zinc-700">
         {formatLanguageList(officialLanguages)}
@@ -146,6 +154,10 @@ export function CountryTable({
               <th className="px-4 py-4 font-semibold">Country</th>
               <th className="px-4 py-4 font-semibold">Capital</th>
               <th className="px-4 py-4 font-semibold">Region</th>
+              <th className="px-4 py-4 font-semibold">Current Population</th>
+              <th className="px-4 py-4 font-semibold">
+                Independence / National Day
+              </th>
               <th className="px-4 py-4 font-semibold">Official Languages</th>
               <th className="px-4 py-4 font-semibold">Business Languages</th>
               <th className="px-4 py-4 font-semibold">Currency</th>

@@ -5,6 +5,7 @@ import {
   getAllCurrencies,
   getPrimaryCurrency
 } from "@/lib/currency";
+import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import {
   formatLanguageList,
   getBusinessLanguages,
@@ -54,6 +55,7 @@ export function CountryCard({
     : "Currency not listed";
   const officialLanguages = getOfficialLanguages(country);
   const businessLanguages = getBusinessLanguages(country);
+  const independenceDay = getIndependenceDay(country);
 
   return (
     <article className="group flex min-h-full flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-5 shadow-soft transition duration-300 hover:-translate-y-1">
@@ -113,6 +115,18 @@ export function CountryCard({
             </p>
             <p className="mt-1 text-xs text-zinc-500">
               Business: {formatLanguageList(businessLanguages)}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+              Country facts
+            </p>
+            <p className="mt-2 text-sm font-semibold text-zinc-900">
+              Population: {formatPopulation(country.population)}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Independence / national day: {independenceDay}
             </p>
           </div>
         </div>

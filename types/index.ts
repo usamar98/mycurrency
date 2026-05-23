@@ -17,6 +17,8 @@ export type RestCountry = {
   };
   currencies?: Record<string, CountryCurrency>;
   languages?: Record<string, string>;
+  population?: number;
+  independent?: boolean;
   timezones?: string[];
   region?: string;
   subregion?: string;
