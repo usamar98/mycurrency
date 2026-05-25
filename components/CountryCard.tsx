@@ -5,6 +5,7 @@ import {
   getAllCurrencies,
   getPrimaryCurrency
 } from "@/lib/currency";
+import { formatCallingCodes } from "@/lib/countryCodes";
 import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import {
   formatLanguageList,
@@ -122,6 +123,10 @@ export function CountryCard({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
               Country facts
             </p>
+            <p className="mt-2 text-sm font-semibold text-zinc-900">
+              Country code: {formatCallingCodes(country)}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">ISO code: {country.cca2}</p>
             <p className="mt-2 text-sm font-semibold text-zinc-900">
               Population: {formatPopulation(country.population)}
             </p>

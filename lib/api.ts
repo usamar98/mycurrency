@@ -1,10 +1,10 @@
 import type { ExchangeRatesResponse, RestCountry } from "@/types";
 
 const COUNTRIES_URL =
-  "https://restcountries.com/v3.1/all?fields=name,cca2,capital,flags,currencies,languages,population,timezones,region,subregion";
+  "https://restcountries.com/v3.1/all?fields=name,cca2,capital,flags,currencies,languages,population,idd,timezones,region";
 const RATES_BASE_URL = "https://open.er-api.com/v6/latest";
 
-const COUNTRIES_CACHE_KEY = "wctc:countries:v3";
+const COUNTRIES_CACHE_KEY = "wctc:countries:v4";
 const RATES_CACHE_PREFIX = "wctc:rates:v1";
 const COUNTRIES_TTL = 24 * 60 * 60 * 1000;
 const RATES_TTL = 30 * 60 * 1000;

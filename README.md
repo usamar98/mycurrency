@@ -10,10 +10,11 @@ A Next.js + TypeScript dashboard for comparing every country's primary currency,
 - Converts `rates[CURRENCY_CODE]` into `1 foreign currency = X base currency` with `1 / rate`
 - Current time and offset comparison against the selected base timezone
 - Current population from the REST Countries dataset
+- Country dialing codes such as `+92`, with a dedicated country-code filter
 - Independence or national day display with a curated fallback map
 - Official languages from REST Countries
 - Business languages estimated from official languages plus English where it is not already listed
-- Search, region filter, table/card view toggle
+- Search, region filter, country-code filter, table/card view toggle
 - Multiple currency display and timezone dropdowns
 - Loading skeletons, empty state, error state, currency refresh, localStorage caching
 

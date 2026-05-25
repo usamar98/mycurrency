@@ -14,6 +14,9 @@ type SearchFiltersProps = {
   regions: string[];
   selectedRegion: string;
   onRegionChange: (value: string) => void;
+  countryCodeOptions: string[];
+  selectedCountryCode: string;
+  onCountryCodeChange: (value: string) => void;
   viewMode: ViewMode;
   onViewModeChange: (value: ViewMode) => void;
   onRefreshRates: () => void;
@@ -33,6 +36,9 @@ export function SearchFilters({
   regions,
   selectedRegion,
   onRegionChange,
+  countryCodeOptions,
+  selectedCountryCode,
+  onCountryCodeChange,
   viewMode,
   onViewModeChange,
   onRefreshRates,
@@ -95,7 +101,7 @@ export function SearchFilters({
           </button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(280px,1fr)_220px_auto] lg:items-end">
+        <div className="grid gap-4 lg:grid-cols-[minmax(280px,1fr)_220px_190px_auto] lg:items-end">
           <label className="grid gap-2">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Search
@@ -103,7 +109,7 @@ export function SearchFilters({
             <input
               value={searchTerm}
               onChange={(event) => onSearchTermChange(event.target.value)}
-              placeholder="Country, capital, currency, population, language, independence"
+              placeholder="Country, ISO code, dialing code, currency, population"
               className="h-12 rounded-lg border border-zinc-200 bg-white px-4 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
           </label>
@@ -121,6 +127,24 @@ export function SearchFilters({
               {regions.map((region) => (
                 <option key={region} value={region}>
                   {region}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Country code
+            </span>
+            <select
+              value={selectedCountryCode}
+              onChange={(event) => onCountryCodeChange(event.target.value)}
+              className="h-12 rounded-lg border border-zinc-200 bg-white px-4 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
+            >
+              <option value="All">All codes</option>
+              {countryCodeOptions.map((countryCode) => (
+                <option key={countryCode} value={countryCode}>
+                  {countryCode}
                 </option>
               ))}
             </select>

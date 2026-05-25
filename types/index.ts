@@ -16,6 +16,10 @@ export type RestCountry = {
     alt?: string;
   };
   currencies?: Record<string, CountryCurrency>;
+  idd?: {
+    root?: string;
+    suffixes?: string[];
+  };
   languages?: Record<string, string>;
   population?: number;
   independent?: boolean;

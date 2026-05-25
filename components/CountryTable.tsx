@@ -6,6 +6,7 @@ import {
   getAllCurrencies,
   getPrimaryCurrency
 } from "@/lib/currency";
+import { formatCallingCodes } from "@/lib/countryCodes";
 import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import {
   formatLanguageList,
@@ -62,6 +63,12 @@ function CountryRow({
       <td className="min-w-48 px-4 py-4">
         <p className="font-semibold text-zinc-950">{country.name.common}</p>
         <p className="text-xs text-zinc-500">{country.cca2}</p>
+      </td>
+      <td className="min-w-36 px-4 py-4">
+        <p className="font-mono text-sm font-bold text-zinc-950">
+          {formatCallingCodes(country)}
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">ISO {country.cca2}</p>
       </td>
       <td className="min-w-44 px-4 py-4 text-sm text-zinc-600">
         {country.capital?.join(", ") ?? "Not listed"}
@@ -152,6 +159,7 @@ export function CountryTable({
             <tr>
               <th className="px-4 py-4 font-semibold">Flag</th>
               <th className="px-4 py-4 font-semibold">Country</th>
+              <th className="px-4 py-4 font-semibold">Country Code</th>
               <th className="px-4 py-4 font-semibold">Capital</th>
               <th className="px-4 py-4 font-semibold">Region</th>
               <th className="px-4 py-4 font-semibold">Current Population</th>

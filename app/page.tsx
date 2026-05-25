@@ -4,6 +4,11 @@ import { CountryCard } from "@/components/CountryCard";
 import { CountryTable } from "@/components/CountryTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { fetchCountries, fetchRates } from "@/lib/api";
+import {
+  formatCallingCodes,
+  getCallingCodes,
+  sortCallingCodes
+} from "@/lib/countryCodes";
 import { formatPopulation, getIndependenceDay } from "@/lib/countryFacts";
 import { getPrimaryCurrency, hasCurrencyRate } from "@/lib/currency";
 import {
@@ -55,8 +60,8 @@ function EmptyState() {
         No countries match your filters.
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-        Try a different country name, capital, currency code, population,
-        language, independence day, or region.
+        Try a different country name, ISO code, dialing code, capital, currency,
+        population, language, independence day, or region.
       </p>
     </div>
   );
@@ -224,6 +229,7 @@ export default function Home() {
   const [selectedBaseTimezone, setSelectedBaseTimezone] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("All");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("All");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [isCountriesLoading, setIsCountriesLoading] = useState(true);
   const [isRatesLoading, setIsRatesLoading] = useState(false);
@@ -420,6 +426,14 @@ export default function Home() {
     [countries]
   );
 
+  const countryCodeOptions = useMemo(
+    () =>
+      sortCallingCodes(
+        Array.from(new Set(countries.flatMap((country) => getCallingCodes(country))))
+      ),
+    [countries]
+  );
+
   const baseCountryOptions = useMemo<BaseCountryOption[]>(
     () =>
       countries
@@ -450,9 +464,11 @@ export default function Home() {
       const searchableText = [
         country.name.common,
         country.name.official,
+        country.cca2,
         country.capital?.join(" "),
         country.region,
         country.subregion,
+        formatCallingCodes(country),
         currency?.code,
         currency?.name,
         formatPopulation(country.population),
@@ -469,10 +485,13 @@ export default function Home() {
         searchableText.includes(normalizedSearch);
       const matchesRegion =
         selectedRegion === "All" || country.region === selectedRegion;
+      const matchesCountryCode =
+        selectedCountryCode === "All" ||
+        getCallingCodes(country).includes(selectedCountryCode);
 
-      return matchesSearch && matchesRegion;
+      return matchesSearch && matchesRegion && matchesCountryCode;
     });
-  }, [countries, searchTerm, selectedRegion]);
+  }, [countries, searchTerm, selectedRegion, selectedCountryCode]);
 
   const countriesWithRates = useMemo(
     () =>
@@ -571,6 +590,9 @@ export default function Home() {
         regions={regions}
         selectedRegion={selectedRegion}
         onRegionChange={setSelectedRegion}
+        countryCodeOptions={countryCodeOptions}
+        selectedCountryCode={selectedCountryCode}
+        onCountryCodeChange={setSelectedCountryCode}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefreshRates={refreshRates}
