@@ -665,7 +665,7 @@ export default function Home() {
       </section>
 
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-2 text-sm text-zinc-500 sm:px-6 lg:px-8">
-        Country data from REST Countries v5. Rates by {ratesSourceLabel}.
+        Country metadata from public country datasets. Rates by {ratesSourceLabel}.
       </footer>
     </main>
   );

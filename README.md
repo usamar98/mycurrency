@@ -4,7 +4,7 @@ A Next.js + TypeScript dashboard for comparing every country's primary currency,
 
 ## Features
 
-- Countries from REST Countries API v5 through a server route
+- Countries from a server route that uses REST Countries v5 when configured and no-key public country datasets as fallback
 - Select any base country to switch the dashboard currency and timezone context
 - Exchange rates from an app-owned API route that merges Frankfurter central-bank rates with ExchangeRate-API fallback coverage
 - Converts `rates[CURRENCY_CODE]` into `1 foreign currency = X base currency` with `1 / rate`
@@ -20,13 +20,13 @@ A Next.js + TypeScript dashboard for comparing every country's primary currency,
 
 ## Run Locally
 
-Create `.env.local`:
+Optional: create `.env.local` if you have a REST Countries v5 key:
 
 ```bash
 REST_COUNTRIES_API_KEY=your_rest_countries_v5_api_key
 ```
 
-REST Countries v3/v4 endpoints have been deprecated, so a v5 key is required for the full authentic country dataset.
+REST Countries v3/v4 endpoints have been deprecated. Without a v5 key, the app automatically uses public `mledoze/countries` and `countries-states-cities` data so deployments still load country, currency, language, population, dialing-code, and timezone fields.
 
 ```bash
 npm install
@@ -44,7 +44,7 @@ The browser calls only local Next.js routes:
 /api/rates?base={BASE_CURRENCY}
 ```
 
-`/api/countries` uses REST Countries v5 on the server with `REST_COUNTRIES_API_KEY`, maps the v5 response to the app's country shape, and caches successful responses.
+`/api/countries` uses REST Countries v5 on the server with `REST_COUNTRIES_API_KEY` when available. If the key is missing or the request fails, it falls back to public country datasets, maps the data to the app's country shape, and caches successful responses.
 
 `/api/rates` requests Frankfurter and ExchangeRate-API, validates both responses, merges them into one rate table, and caches successful responses. The app calculates:
 

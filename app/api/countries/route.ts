@@ -6,6 +6,10 @@ const REST_COUNTRIES_API_URL =
   process.env.REST_COUNTRIES_API_BASE_URL ??
   "https://api.restcountries.com/countries/v5";
 const REST_COUNTRIES_API_KEY = process.env.REST_COUNTRIES_API_KEY;
+const PUBLIC_COUNTRIES_URL =
+  "https://raw.githubusercontent.com/mledoze/countries/master/countries.json";
+const PUBLIC_COUNTRY_METADATA_URL =
+  "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/master/json/countries.json";
 const COUNTRIES_CACHE_MS = 24 * 60 * 60 * 1000;
 const COUNTRY_FIELDS = [
   "names",
@@ -80,9 +84,45 @@ type RestCountriesV5Country = {
   };
 };
 
+type PublicCountry = {
+  name?: {
+    common?: string;
+    official?: string;
+  };
+  cca2?: string;
+  independent?: boolean;
+  currencies?: Record<string, { name?: string; symbol?: string }>;
+  idd?: {
+    root?: string;
+    suffixes?: string[];
+  };
+  capital?: string[];
+  region?: string;
+  subregion?: string;
+  languages?: Record<string, string>;
+};
+
+type PublicCountryMetadata = {
+  iso2?: string;
+  name?: string;
+  capital?: string;
+  currency?: string;
+  currency_name?: string;
+  currency_symbol?: string;
+  phonecode?: string;
+  population?: number;
+  region?: string;
+  subregion?: string;
+  timezones?: Array<{
+    zoneName?: string;
+    gmtOffsetName?: string;
+  }>;
+};
+
 let countriesCache: {
   timestamp: number;
   data: RestCountry[];
+  source: string;
 } | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -219,6 +259,98 @@ function mapCountry(country: RestCountriesV5Country): RestCountry | null {
   };
 }
 
+function normalizeCountryCode(value: unknown): string | null {
+  if (!isNonEmptyString(value)) {
+    return null;
+  }
+
+  const code = value.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
+function getFlagUrls(countryCode: string, countryName: string): RestCountry["flags"] {
+  const lowerCode = countryCode.toLowerCase();
+
+  return {
+    png: `https://flagcdn.com/w320/${lowerCode}.png`,
+    svg: `https://flagcdn.com/${lowerCode}.svg`,
+    alt: `Flag of ${countryName}`
+  };
+}
+
+function mapPublicMetadata(metadata: PublicCountryMetadata | undefined) {
+  const timezones = metadata?.timezones
+    ?.map((timezone) => timezone.zoneName ?? timezone.gmtOffsetName)
+    .filter(isNonEmptyString);
+  const callingCodes = metadata?.phonecode
+    ?.split(",")
+    .map((code) => code.trim())
+    .filter(Boolean)
+    .map((code) => (code.startsWith("+") ? code : `+${code}`));
+
+  return {
+    callingCodes:
+      callingCodes && callingCodes.length > 0
+        ? Array.from(new Set(callingCodes))
+        : undefined,
+    population:
+      typeof metadata?.population === "number" ? metadata.population : undefined,
+    timezones:
+      timezones && timezones.length > 0
+        ? Array.from(new Set(timezones))
+        : undefined
+  };
+}
+
+function mapPublicCountry(
+  country: PublicCountry,
+  metadata: PublicCountryMetadata | undefined
+): RestCountry | null {
+  const commonName = country.name?.common?.trim() ?? metadata?.name?.trim();
+  const alpha2 = normalizeCountryCode(country.cca2 ?? metadata?.iso2);
+
+  if (!commonName || !alpha2) {
+    return null;
+  }
+
+  const publicMetadata = mapPublicMetadata(metadata);
+  const fallbackCurrencyCode = normalizeCurrencyCode(metadata?.currency);
+  const fallbackCurrencies =
+    fallbackCurrencyCode && isNonEmptyString(metadata?.currency_name)
+      ? {
+          [fallbackCurrencyCode]: {
+            name: metadata.currency_name.trim(),
+            symbol: isNonEmptyString(metadata.currency_symbol)
+              ? metadata.currency_symbol.trim()
+              : undefined
+          }
+        }
+      : undefined;
+
+  return {
+    name: {
+      common: commonName,
+      official: country.name?.official?.trim() ?? commonName
+    },
+    cca2: alpha2,
+    capital: country.capital?.length
+      ? country.capital.filter(isNonEmptyString)
+      : isNonEmptyString(metadata?.capital)
+        ? [metadata.capital.trim()]
+        : undefined,
+    flags: getFlagUrls(alpha2, commonName),
+    currencies: mapCurrencies(country.currencies) ?? fallbackCurrencies,
+    callingCodes: publicMetadata.callingCodes,
+    idd: country.idd,
+    languages: mapLanguages(country.languages),
+    population: publicMetadata.population,
+    independent: country.independent,
+    timezones: publicMetadata.timezones,
+    region: country.region?.trim() ?? metadata?.region?.trim(),
+    subregion: country.subregion?.trim() ?? metadata?.subregion?.trim()
+  };
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof UpstreamRequestError && error.body) {
     try {
@@ -240,9 +372,7 @@ function getErrorMessage(error: unknown) {
 
 async function loadCountriesFromRestCountriesV5() {
   if (!REST_COUNTRIES_API_KEY) {
-    throw new Error(
-      "REST_COUNTRIES_API_KEY is required. REST Countries v3/v4 endpoints are deprecated; configure a v5 key on the server to load authentic country data."
-    );
+    return null;
   }
 
   const countries: RestCountry[] = [];
@@ -305,27 +435,103 @@ async function loadCountriesFromRestCountriesV5() {
   return countries.sort((a, b) => a.name.common.localeCompare(b.name.common));
 }
 
+async function loadCountriesFromPublicSources() {
+  const [countries, metadata] = await Promise.all([
+    fetchJsonWithTimeout<PublicCountry[]>(
+      PUBLIC_COUNTRIES_URL,
+      {
+        headers: {
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      },
+      20_000
+    ),
+    fetchJsonWithTimeout<PublicCountryMetadata[]>(
+      PUBLIC_COUNTRY_METADATA_URL,
+      {
+        headers: {
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      },
+      20_000
+    )
+  ]);
+
+  if (!Array.isArray(countries) || !Array.isArray(metadata)) {
+    throw new Error("Public country sources returned an unexpected response.");
+  }
+
+  const metadataByCode = new Map(
+    metadata
+      .map((item) => [normalizeCountryCode(item.iso2), item] as const)
+      .filter(
+        (entry): entry is readonly [string, PublicCountryMetadata] =>
+          entry[0] !== null
+      )
+  );
+  const normalizedCountries = countries
+    .map((country) =>
+      mapPublicCountry(
+        country,
+        metadataByCode.get(normalizeCountryCode(country.cca2) ?? "")
+      )
+    )
+    .filter((country): country is RestCountry => country !== null)
+    .sort((a, b) => a.name.common.localeCompare(b.name.common));
+
+  if (normalizedCountries.length < 150) {
+    throw new Error(
+      `Public country sources returned only ${normalizedCountries.length} countries, so the dataset looks incomplete.`
+    );
+  }
+
+  return normalizedCountries;
+}
+
+async function loadCountries() {
+  try {
+    const restCountries = await loadCountriesFromRestCountriesV5();
+    if (restCountries) {
+      return {
+        source: "REST Countries v5",
+        data: restCountries
+      };
+    }
+  } catch {
+    // Fall through to public sources so deployment keeps working if the v5 key
+    // is missing, expired, or temporarily rejected.
+  }
+
+  return {
+    source: "mledoze/countries + countries-states-cities",
+    data: await loadCountriesFromPublicSources()
+  };
+}
+
 export async function GET() {
   if (countriesCache && Date.now() - countriesCache.timestamp < COUNTRIES_CACHE_MS) {
     return NextResponse.json(countriesCache.data, {
       headers: {
         "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-        "X-Data-Source": "REST Countries v5"
+        "X-Data-Source": countriesCache.source
       }
     });
   }
 
   try {
-    const countries = await loadCountriesFromRestCountriesV5();
+    const countries = await loadCountries();
     countriesCache = {
       timestamp: Date.now(),
-      data: countries
+      data: countries.data,
+      source: countries.source
     };
 
-    return NextResponse.json(countries, {
+    return NextResponse.json(countries.data, {
       headers: {
         "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-        "X-Data-Source": "REST Countries v5"
+        "X-Data-Source": countries.source
       }
     });
   } catch (error) {
