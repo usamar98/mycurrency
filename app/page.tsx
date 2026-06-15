@@ -254,6 +254,7 @@ export default function Home() {
   const baseCurrencyCode = selectedBaseCurrency?.code ?? ratesData?.base_code ?? "";
   const baseCountryName = selectedBaseCountry?.name.common ?? "selected base";
   const ratesUpdatedLabel = formatApiUpdatedTime(ratesData);
+  const ratesSourceLabel = ratesData?.provider ?? "exchange-rate providers";
 
   const loadCountries = useCallback(async () => {
     setIsCountriesLoading(true);
@@ -664,7 +665,7 @@ export default function Home() {
       </section>
 
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-2 text-sm text-zinc-500 sm:px-6 lg:px-8">
-        Rates by ExchangeRate-API
+        Country data from REST Countries v5. Rates by {ratesSourceLabel}.
       </footer>
     </main>
   );

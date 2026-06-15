@@ -1,6 +1,17 @@
 import type { RestCountry } from "@/types";
 
 export function getCallingCodes(country: RestCountry): string[] {
+  if (country.callingCodes?.length) {
+    return Array.from(
+      new Set(
+        country.callingCodes
+          .map((code) => code.trim())
+          .filter(Boolean)
+          .map((code) => (code.startsWith("+") ? code : `+${code}`))
+      )
+    );
+  }
+
   const root = country.idd?.root;
   const suffixes = country.idd?.suffixes ?? [];
 

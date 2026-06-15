@@ -16,6 +16,7 @@ export type RestCountry = {
     alt?: string;
   };
   currencies?: Record<string, CountryCurrency>;
+  callingCodes?: string[];
   idd?: {
     root?: string;
     suffixes?: string[];

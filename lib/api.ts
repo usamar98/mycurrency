@@ -1,11 +1,10 @@
 import type { ExchangeRatesResponse, RestCountry } from "@/types";
 
-const COUNTRIES_URL =
-  "https://restcountries.com/v3.1/all?fields=name,cca2,capital,flags,currencies,languages,population,idd,timezones,region";
-const RATES_BASE_URL = "https://open.er-api.com/v6/latest";
+const COUNTRIES_URL = "/api/countries";
+const RATES_URL = "/api/rates";
 
-const COUNTRIES_CACHE_KEY = "wctc:countries:v4";
-const RATES_CACHE_PREFIX = "wctc:rates:v1";
+const COUNTRIES_CACHE_KEY = "wctc:countries:v5";
+const RATES_CACHE_PREFIX = "wctc:rates:v2";
 const COUNTRIES_TTL = 24 * 60 * 60 * 1000;
 const RATES_TTL = 30 * 60 * 1000;
 
@@ -54,6 +53,48 @@ function writeCache<T>(key: string, data: T) {
   }
 }
 
+function getApiErrorMessage(payload: unknown): string | null {
+  if (typeof payload !== "object" || payload === null) {
+    return null;
+  }
+
+  const errorPayload = payload as {
+    error?: unknown;
+    message?: unknown;
+  };
+
+  if (typeof errorPayload.error === "string") {
+    return errorPayload.error;
+  }
+
+  if (typeof errorPayload.message === "string") {
+    return errorPayload.message;
+  }
+
+  return null;
+}
+
+async function readApiJson<T>(
+  response: Response,
+  fallbackMessage: string
+): Promise<T> {
+  let payload: unknown = null;
+
+  try {
+    payload = await response.json();
+  } catch {
+    if (response.ok) {
+      throw new Error("API returned invalid JSON.");
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload) ?? fallbackMessage);
+  }
+
+  return payload as T;
+}
+
 export async function fetchCountries(): Promise<RestCountry[]> {
   const cachedCountries = readCache<RestCountry[]>(
     COUNTRIES_CACHE_KEY,
@@ -63,12 +104,20 @@ export async function fetchCountries(): Promise<RestCountry[]> {
     return cachedCountries;
   }
 
-  const response = await fetch(COUNTRIES_URL);
-  if (!response.ok) {
-    throw new Error("Could not load country data.");
+  const response = await fetch(COUNTRIES_URL, {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  const countries = await readApiJson<RestCountry[]>(
+    response,
+    "Could not load country data."
+  );
+
+  if (!Array.isArray(countries)) {
+    throw new Error("Country API returned an unexpected response.");
   }
 
-  const countries = (await response.json()) as RestCountry[];
   const sortedCountries = countries.sort((a, b) =>
     a.name.common.localeCompare(b.name.common)
   );
@@ -95,12 +144,24 @@ export async function fetchRates(
     }
   }
 
-  const response = await fetch(`${RATES_BASE_URL}/${normalizedBase}`);
-  if (!response.ok) {
-    throw new Error(`Could not load ${normalizedBase} exchange rates.`);
+  const params = new URLSearchParams({
+    base: normalizedBase
+  });
+
+  if (forceRefresh) {
+    params.set("refresh", "1");
   }
 
-  const rates = (await response.json()) as ExchangeRatesResponse;
+  const response = await fetch(`${RATES_URL}?${params.toString()}`, {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  const rates = await readApiJson<ExchangeRatesResponse>(
+    response,
+    `Could not load ${normalizedBase} exchange rates.`
+  );
+
   if (rates.result !== "success" || !rates.rates) {
     throw new Error("Currency API returned an unexpected response.");
   }
